@@ -32,17 +32,16 @@ class KokoroEngine(BaseEngine):
         current_lang (str): Language code derived from the current voice.
     """
 
-    def __init__(self, default_lang_code: str = "a", default_voice: str = "af_heart", debug: bool = False):
+
+    def __init__(self, default_lang_code: str = "a", default_voice: str = "af_heart", debug: bool = False, speed: float = 1.0):
         """
         Initializes the KokoroEngine with default settings.
-
-        This sets up the audio queue, voice and language selection, and creates
-        the initial pipeline for the default language.
 
         Args:
             default_lang_code (str): Fallback language code if the voice doesn't specify one.
             default_voice (str): Default voice to use (e.g., "af_heart").
             debug (bool): If True, prints detailed debug output.
+            speed (float): Default playback speed (1.0 is normal speed; >1.0 is faster, <1.0 is slower).
         """
         super().__init__()
         self.debug = debug
@@ -55,11 +54,16 @@ class KokoroEngine(BaseEngine):
         lang_from_voice = self._get_lang_code_from_voice(default_voice)
         self.current_lang = lang_from_voice if lang_from_voice else default_lang_code
 
+        # Save the default speed parameter.
+        self.default_speed = speed
+
         # Create and cache the pipeline for the current language.
         self.pipelines[self.current_lang] = KPipeline(lang_code=self.current_lang)
 
         if self.debug:
-            print(f"[KokoroEngine] Initialized with voice: {self.current_voice_name} (lang: {self.current_lang})")
+            print(f"[KokoroEngine] Initialized with voice: {self.current_voice_name} (lang: {self.current_lang}), speed: {self.default_speed}")
+
+ 
 
     def _get_lang_code_from_voice(self, voice_name: str) -> str:
         """
@@ -129,11 +133,7 @@ class KokoroEngine(BaseEngine):
 
     def synthesize(self, text: str) -> bool:
         """
-        Converts the input text into speech audio.
-
-        The method uses the appropriate pipeline for the current language to generate
-        audio data in chunks. Each chunk is processed to convert from float32 to int16
-        format and then added to the audio queue.
+        Converts the input text into speech audio using the default speed.
 
         Args:
             text (str): The text string to synthesize.
@@ -147,8 +147,8 @@ class KokoroEngine(BaseEngine):
                 print(f"[KokoroEngine] Synthesizing with language code: {self.current_lang}")
             # Get or create the pipeline corresponding to the current language.
             pipeline = self._get_pipeline(self.current_lang)
-            # Generate audio in chunks from the pipeline.
-            generator = pipeline(text, voice=self.current_voice_name, speed=1.0)
+            # Generate audio in chunks from the pipeline, passing the stored speed value.
+            generator = pipeline(text, voice=self.current_voice_name, speed=self.default_speed)
 
             for index, (graphemes, phonemes, audio_float32) in enumerate(generator):
                 # If audio is provided as a Torch Tensor, convert it to a NumPy array.
