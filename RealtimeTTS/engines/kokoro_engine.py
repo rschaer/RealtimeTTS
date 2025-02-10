@@ -34,7 +34,11 @@ class KokoroEngine(BaseEngine):
 
 
     def __init__(self, default_lang_code: str = "a", default_voice: str = "af_heart", debug: bool = False, speed: float = 1.0):
+
         """
+        This sets up the audio queue, voice and language selection, and creates
+        the initial pipeline for the default language.
+        
         Initializes the KokoroEngine with default settings.
 
         Args:
